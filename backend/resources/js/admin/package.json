@@ -1,0 +1,10 @@
+{
+  "name": "admin-ui",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "vue": "^3.2.0",
+    "axios": "^1.4.0",
+    "apexcharts": "^3.35.3"
+  }
+}

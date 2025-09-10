@@ -1,0 +1,67 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - appnet
+
+  redis:
+    image: redis:6
+    networks:
+      - appnet
+
+  backend:
+    build: ./backend
+    depends_on: [db, redis]
+    environment:
+      DB_HOST: db
+      DB_DATABASE: app_db
+      DB_USERNAME: appuser
+      DB_PASSWORD: apppass
+      APP_ENV: local
+      APP_DEBUG: 'true'
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - appnet
+    ports:
+      - "9000:9000"
+
+  frontend:
+    build: ./frontend
+    working_dir: /usr/src/app
+    depends_on: [backend]
+    volumes:
+      - ./frontend:/usr/src/app
+    command: npm run start
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:9000/api
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
+
+  proxy:
+    image: nginx:stable
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on: [frontend, backend]
+    networks:
+      - appnet
+
+volumes:
+  dbdata:
+
+networks:
+  appnet:
+    driver: bridge
